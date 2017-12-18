@@ -21,6 +21,8 @@ Resources:
   SnsToDbSubscription:
     Type: AWS::SNS:Subscription
     Properties:
-      Endpoint: !GetAtt SnsToDb.Arn
+      Endpoint:
+        Fn::GetAtt: ["SnsToDb", "Arn"]
       Protocol: SNS
       TopicArn: !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:commute_traffic
+    DependsOn: "SnsToDb"
