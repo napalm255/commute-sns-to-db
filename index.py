@@ -4,6 +4,7 @@ import sys
 import logging
 import os
 import json
+from collections import OrderedDict
 import pymysql
 
 
@@ -18,7 +19,7 @@ try:
     logging.info('Successfully connected to MySql.')
 except:
     logging.error('Unexpected error: could not connect to MySql.')
-    sys.exit()
+    # sys.exit()
 
 
 def handler(event, context):
@@ -28,17 +29,35 @@ def handler(event, context):
     logger.setLevel(logging.INFO)
     logger.info(event)
 
+    with open('/home/napalm/tmp/whee.json') as json_file:
+        event = json.load(json_file)
+
     header = {'Content-Type': 'application/json'}
+    edata = event['Records'][0]['Sns']['Message']
 
     table_name = 'traffic'
-    table_scheme = ("id INT NOT NULL AUTO_INCREMENT,"
-                    "timestamp TIMESTAMP NOT NULL,"
-                    "origin VARCHAR(255) NOT NULL,"
-                    "destination VARCHAR(255) NOT NULL,"
-                    "distance_miles FLOAT,"
-                    "distance_meters FLOAT,"
-                    "duration INT,"
-                    "duration_in_traffic INT")
+    table_data = OrderedDict([
+        ('id', {'type': 'INT NOT NULL AUTO_INCREMENT',
+                'value': ''}),
+        ('timestamp', {'type': 'TIMESTAMP NOT NULL',
+                       'value': edata['timestamp']}),
+        ('origin', {'type': 'VARCHAR(255) NOT NULL',
+                    'value': edata['origin']}),
+        ('destination', {'type': 'VARCHAR(255) NOT NULL',
+                         'value': edata['destination']}),
+        ('distance_miles', {'type': 'FLOAT',
+                            'value': edata['distance']['text'].replace(' mi', '')}),
+        ('distance_meters', {'type': 'FLOAT',
+                             'value': edata['distance']['value']}),
+        ('duration', {'type': 'INT',
+                      'value': edata['duration']['value']}),
+        ('duration_in_traffic', {'type': 'INT',
+                                 'value': edata['duration_in_traffic']['value']})
+    ])
+    table_scheme = ', '.join([x + " " + y['type'] for x, y in table_data.iteritems()])
+    columns = ', '.join(table_data.keys())
+    values = ', '.join(['"' + str(y['value']) + '"' for x, y in table_data.iteritems() if
+                        'id' not in x])
 
     with connection.cursor() as cursor:
         # check if database exists
@@ -64,6 +83,7 @@ def handler(event, context):
         records = cursor.fetchall()
         logging.info(records)
         # insert new record
+        cursor.execute('INSERT INTO traffic (%s) VALUES (%s)' % (columns, values))
 
     message = {'databases': databases,
                'database': {
@@ -73,3 +93,6 @@ def handler(event, context):
     return {'statusCode': 200,
             'body': json.dumps(message),
             'headers': header}
+
+if __name__ == '__main__':
+    handler({'foo': 'bar'}, None)
