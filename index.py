@@ -78,7 +78,6 @@ def handler(event, context):
         tables = cursor.fetchall()
         logging.info(tables)
         # create table if it does not exist
-        cursor.execute('DROP TABLE IF EXISTS commute')  # TODO: TEMPORARY
         if (table_name,) not in tables:
             sql = 'CREATE TABLE %s (%s, PRIMARY KEY (id))' % (table_name, tbl)
             cursor.execute(sql)
