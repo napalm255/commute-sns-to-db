@@ -46,6 +46,7 @@ Resources:
           - subnet-9c5315b6
       Policies:
         - AmazonSNSFullAccess
+        - AWSLambdaVPCAccessExecutionRole
       Environment:
         Variables:
           DATABASE_HOST: !Ref DatabaseHost
