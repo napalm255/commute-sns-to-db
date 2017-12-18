@@ -9,7 +9,8 @@ def handler(event, context):
     # pylint: disable=unused-argument
     data = {
         'output': 'Hello World',
-        'timestamp': datetime.datetime.utcnow().isoformat()
+        'timestamp': datetime.datetime.utcnow().isoformat(),
+        'pymysql': str(pymysql)
     }
     return {'statusCode': 200,
             'body': json.dumps(data),
