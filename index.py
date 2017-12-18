@@ -19,7 +19,7 @@ try:
     logging.info('Successfully connected to MySql.')
 except:
     logging.error('Unexpected error: could not connect to MySql.')
-    # sys.exit()
+    sys.exit()
 
 
 def handler(event, context):
@@ -30,10 +30,7 @@ def handler(event, context):
     logger.info(event)
 
     header = {'Content-Type': 'application/json'}
-    if __name__ == '__main__':
-        edata = event['Records'][0]['Sns']['Message']
-    else:
-        edata = json.loads(event['Records'][0]['Sns']['Message'])
+    edata = json.loads(event['Records'][0]['Sns']['Message'])
 
     table_name = 'traffic'
     table_data = OrderedDict([
