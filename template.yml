@@ -48,10 +48,10 @@ Resources:
         - AmazonSNSFullAccess
       Environment:
         Variables:
-          - DATABASE_HOST: !Ref DatabaseHost
-          - DATABASE_USER: !Ref DatabaseUser
-          - DATABASE_PASS: !Ref DatabasePass
-          - DATABASE_NAME: !Ref DatabaseName
+          DATABASE_HOST: !Ref DatabaseHost
+          DATABASE_USER: !Ref DatabaseUser
+          DATABASE_PASS: !Ref DatabasePass
+          DATABASE_NAME: !Ref DatabaseName
       Events:
         CommuteTopic:
           Type: SNS
