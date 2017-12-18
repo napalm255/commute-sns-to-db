@@ -23,4 +23,4 @@ Resources:
         CommuteTopic:
           Type: SNS
           Properties:
-            Topic: !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:commute_traffic
+            Topic: !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:commute-traffic
