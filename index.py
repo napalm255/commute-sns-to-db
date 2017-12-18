@@ -34,7 +34,7 @@ def handler(event, context):
         cursor.execute('show databases')
         databases = cursor.fetchall()
         logging.info(databases)
-        if DATA['db_name'] not in databases:
+        if (DATA['db_name'],) not in databases:
             cursor.execute('CREATE DATABASE %s' % DATA['db_name'])
             cursor.execute('USE %s' % DATA['db_name'])
             connection.commit()
