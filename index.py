@@ -30,7 +30,7 @@ def handler(event, context):
     logger.info(event)
 
     header = {'Content-Type': 'application/json'}
-    edata = event['Records'][0]['Sns']['Message']
+    edata = json.loads(event['Records'][0]['Sns']['Message'])
 
     table_name = 'traffic'
     table_data = OrderedDict([
