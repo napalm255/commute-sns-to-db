@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Commute SNS to Database."""
 import sys
 import logging
@@ -18,7 +19,7 @@ try:
     logging.info('Successfully connected to MySql.')
 except:
     logging.error('Unexpected error: could not connect to MySql.')
-    sys.exit()
+    # sys.exit()
 
 
 def handler(event, context):
@@ -29,7 +30,10 @@ def handler(event, context):
     logger.info(event)
 
     header = {'Content-Type': 'application/json'}
-    edata = json.loads(event['Records'][0]['Sns']['Message'])
+    if __name__ == '__main__':
+        edata = event['Records'][0]['Sns']['Message']
+    else:
+        edata = json.loads(event['Records'][0]['Sns']['Message'])
 
     table_name = 'traffic'
     table_data = OrderedDict([
@@ -38,21 +42,21 @@ def handler(event, context):
         ('timestamp', {'type': 'TIMESTAMP NOT NULL',
                        'value': edata['timestamp']}),
         ('origin', {'type': 'VARCHAR(255) NOT NULL',
-                    'value': edata['origin']}),
+                    'value': '"' + edata['origin'] + '"'}),
         ('destination', {'type': 'VARCHAR(255) NOT NULL',
-                         'value': edata['destination']}),
+                         'value': '"' + edata['destination'] + '"'}),
         ('distance_miles', {'type': 'FLOAT',
-                            'value': edata['distance']['text'].replace(' mi', '')}),
+                            'value': float(edata['distance']['text'].replace(' mi', ''))}),
         ('distance_meters', {'type': 'FLOAT',
-                             'value': edata['distance']['value']}),
+                             'value': float(edata['distance']['value'])}),
         ('duration', {'type': 'INT',
-                      'value': edata['duration']['value']}),
+                      'value': int(edata['duration']['value'])}),
         ('duration_in_traffic', {'type': 'INT',
-                                 'value': edata['duration_in_traffic']['value']})
+                                 'value': int(edata['duration_in_traffic']['value'])})
     ])
     table_scheme = [x + " " + y['type'] for x, y in table_data.iteritems()]
-    columns = table_data.keys()
-    values = ['"' + str(y['value']) + '"' for x, y in table_data.iteritems() if
+    columns = table_data.keys()[1:]
+    values = [str(y['value']) for x, y in table_data.iteritems() if
               'id' not in x]
     tbl = ', '.join(table_scheme)
     cols = ', '.join(columns)
@@ -74,19 +78,19 @@ def handler(event, context):
         tables = cursor.fetchall()
         logging.info(tables)
         # create table if it does not exist
-        cursor.execute('DROP TABLE IF EXISTS commute')
+        cursor.execute('DROP TABLE IF EXISTS commute')  # TODO: TEMPORARY
         if (table_name,) not in tables:
             sql = 'CREATE TABLE %s (%s, PRIMARY KEY (id))' % (table_name, tbl)
             cursor.execute(sql)
             CONNECTION.commit()
-        # select existing records
-        cursor.execute('SELECT * FROM %s' % (table_name))
-        records = cursor.fetchall()
-        logging.info(records)
         # insert new record
         cursor.execute('INSERT INTO %s (%s) VALUES (%s)' %
                        (table_name, cols, vals))
         CONNECTION.commit()
+        # select existing records
+        cursor.execute('SELECT * FROM %s' % (table_name))
+        records = cursor.fetchall()
+        logging.info(records)
 
     message = {'databases': databases,
                'database': {
@@ -100,4 +104,5 @@ def handler(event, context):
 
 
 if __name__ == '__main__':
-    handler({'foo': 'bar'}, None)
+    with open('test.json') as json_file:
+        handler(json.load(json_file), None)
