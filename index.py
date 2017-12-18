@@ -23,7 +23,8 @@ def handler(event, context):
 
     connection = pymysql.connect(host=data['db_host'],
                                  user=data['db_user'],
-                                 password=data['db_pass'])
+                                 password=data['db_pass'],
+                                 db=data['db_name'])
     results = connection.cursor().execute('show tables')
 
     message = {'tables': results}
