@@ -18,12 +18,8 @@ Resources:
       Timeout: 30
       Policies:
         - AmazonSNSFullAccess
-
-  SnsToDbSubscription:
-    Type: AWS::SNS:Subscription
-    Properties:
-      Endpoint:
-        Fn::GetAtt: ["SnsToDb", "Arn"]
-      Protocol: SNS
-      TopicArn: !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:commute_traffic
-    DependsOn: "SnsToDb"
+      Events:
+        CommuteTopic:
+          Type: SNS
+          Properties:
+            Topic: !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:commute_traffic
