@@ -46,7 +46,7 @@ Resources:
           - subnet-9c5315b6
       Policies:
         - AmazonSNSFullAccess
-      Environments:
+      Environment:
         Variables:
           - DATABASE_HOST: !Ref DatabaseHost
           - DATABASE_USER: !Ref DatabaseUser
