@@ -29,9 +29,6 @@ def handler(event, context):
     logger.setLevel(logging.INFO)
     logger.info(event)
 
-    with open('/home/napalm/tmp/whee.json') as json_file:
-        event = json.load(json_file)
-
     header = {'Content-Type': 'application/json'}
     edata = event['Records'][0]['Sns']['Message']
 
@@ -84,6 +81,7 @@ def handler(event, context):
         logging.info(records)
         # insert new record
         cursor.execute('INSERT INTO traffic (%s) VALUES (%s)' % (columns, values))
+        connection.commit()
 
     message = {'databases': databases,
                'database': {
