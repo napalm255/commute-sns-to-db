@@ -1,8 +1,12 @@
+"""Commute SNS to Database."""
 import json
 import datetime
+import pymysql
 
 
 def handler(event, context):
+    """Lambda handler."""
+    # pylint: disable=unused-argument
     data = {
         'output': 'Hello World',
         'timestamp': datetime.datetime.utcnow().isoformat()
