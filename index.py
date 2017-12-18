@@ -1,5 +1,4 @@
 """Commute SNS to Database."""
-
 import sys
 import logging
 import os
@@ -13,18 +12,18 @@ try:
             'db_user': os.environ['DATABASE_USER'],
             'db_pass': os.environ['DATABASE_PASS'],
             'db_name': os.environ['DATABASE_NAME']}
-    connection = pymysql.connect(host=DATA['db_host'],
+    CONNECTION = pymysql.connect(host=DATA['db_host'],
                                  user=DATA['db_user'],
                                  password=DATA['db_pass'])
     logging.info('Successfully connected to MySql.')
 except:
     logging.error('Unexpected error: could not connect to MySql.')
-    # sys.exit()
+    sys.exit()
 
 
 def handler(event, context):
     """Lambda handler."""
-    # pylint: disable=unused-argument
+    # pylint: disable=unused-argument, too-many-locals
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     logger.info(event)
@@ -51,12 +50,15 @@ def handler(event, context):
         ('duration_in_traffic', {'type': 'INT',
                                  'value': edata['duration_in_traffic']['value']})
     ])
-    table_scheme = ', '.join([x + " " + y['type'] for x, y in table_data.iteritems()])
-    columns = ', '.join(table_data.keys())
-    values = ', '.join(['"' + str(y['value']) + '"' for x, y in table_data.iteritems() if
-                        'id' not in x])
+    table_scheme = [x + " " + y['type'] for x, y in table_data.iteritems()]
+    columns = table_data.keys()
+    values = ['"' + str(y['value']) + '"' for x, y in table_data.iteritems() if
+              'id' not in x]
+    tbl = ', '.join(table_scheme)
+    cols = ', '.join(columns)
+    vals = ', '.join(values)
 
-    with connection.cursor() as cursor:
+    with CONNECTION.cursor() as cursor:
         # check if database exists
         cursor.execute('show databases')
         databases = cursor.fetchall()
@@ -64,33 +66,38 @@ def handler(event, context):
         # create database if it does not exist
         if (DATA['db_name'],) not in databases:
             cursor.execute('CREATE DATABASE %s' % DATA['db_name'])
-            connection.commit()
+            CONNECTION.commit()
         # use the database
-        connection.select_db(DATA['db_name'])
+        CONNECTION.select_db(DATA['db_name'])
         # check if table exists
         cursor.execute('show tables')
         tables = cursor.fetchall()
         logging.info(tables)
         # create table if it does not exist
+        cursor.execute('DROP TABLE IF EXISTS commute')
         if (table_name,) not in tables:
-            cursor.execute('CREATE TABLE commute (%s)' % table_scheme)
-            connection.commit()
+            sql = 'CREATE TABLE %s (%s, PRIMARY KEY (id))' % (table_name, tbl)
+            cursor.execute(sql)
+            CONNECTION.commit()
         # select existing records
-        cursor.execute('SELECT * FROM commute')
+        cursor.execute('SELECT * FROM %s' % (table_name))
         records = cursor.fetchall()
         logging.info(records)
         # insert new record
-        cursor.execute('INSERT INTO traffic (%s) VALUES (%s)' % (columns, values))
-        connection.commit()
+        cursor.execute('INSERT INTO %s (%s) VALUES (%s)' %
+                       (table_name, cols, vals))
+        CONNECTION.commit()
 
     message = {'databases': databases,
                'database': {
                    'name': DATA['db_name'],
-                   'tables': tables}}
+                   'tables': tables,
+                   'records': records}}
 
     return {'statusCode': 200,
             'body': json.dumps(message),
             'headers': header}
+
 
 if __name__ == '__main__':
     handler({'foo': 'bar'}, None)
