@@ -1,9 +1,24 @@
 """Commute SNS to Database."""
 
+import sys
 import logging
 import os
 import json
 import pymysql
+
+
+try:
+    DATA = {'db_host': os.environ['DATABASE_HOST'],
+            'db_user': os.environ['DATABASE_USER'],
+            'db_pass': os.environ['DATABASE_PASS'],
+            'db_name': os.environ['DATABASE_NAME']}
+    connection = pymysql.connect(host=DATA['db_host'],
+                                 user=DATA['db_user'],
+                                 password=DATA['db_pass'])
+    logging.info('Successfully connected to MySql.')
+except:
+    logging.error('Unexpected error: could not connect to MySql.')
+    sys.exit()
 
 
 def handler(event, context):
@@ -15,18 +30,13 @@ def handler(event, context):
 
     header = {'Content-Type': 'application/json'}
 
-    data = {'db_host': os.environ['DATABASE_HOST'],
-            'db_user': os.environ['DATABASE_USER'],
-            'db_pass': os.environ['DATABASE_PASS'],
-            'db_name': os.environ['DATABASE_NAME']}
-    logging.info(data)
+    with connection.cursor() as cursor:
+        cursor.execute('show databases')
+        databases = cursor.fetchall()
+        for database in databases:
+            print(database)
 
-    connection = pymysql.connect(host=data['db_host'],
-                                 user=data['db_user'],
-                                 password=data['db_pass'])
-    results = connection.cursor().execute('show databases')
-
-    message = {'tables': results}
+    message = {'databases': databases}
 
     return {'statusCode': 200,
             'body': json.dumps(message),
