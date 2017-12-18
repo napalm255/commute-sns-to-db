@@ -86,19 +86,9 @@ def handler(event, context):
         cursor.execute('INSERT INTO %s (%s) VALUES (%s)' %
                        (table_name, cols, vals))
         CONNECTION.commit()
-        # select existing records
-        cursor.execute('SELECT * FROM %s' % (table_name))
-        records = cursor.fetchall()
-        logging.info(records)
-
-    message = {'databases': databases,
-               'database': {
-                   'name': DATA['db_name'],
-                   'tables': tables,
-                   'records': records}}
 
     return {'statusCode': 200,
-            'body': json.dumps(message),
+            'body': json.dumps({'status': 'OK'}),
             'headers': header}
 
 
