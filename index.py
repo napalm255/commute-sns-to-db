@@ -33,10 +33,19 @@ def handler(event, context):
     with connection.cursor() as cursor:
         cursor.execute('show databases')
         databases = cursor.fetchall()
-        for database in databases:
-            print(database)
+        logging.info('databases')
+        if DATA['db_name'] not in databases:
+            cursor.execute('CREATE DATABASE %s' % DATA['db_name'])
+            cursor.execute('USE %s' % DATA['db_name'])
+            cursor.commit()
+        cursor.execute('show tables')
+        tables = cursor.fetchall()
+        logging.info(tables)
 
-    message = {'databases': databases}
+    message = {'databases': databases,
+               'database': {
+                   'name': DATA['db_name'],
+                   'tables': tables}}
 
     return {'statusCode': 200,
             'body': json.dumps(message),
