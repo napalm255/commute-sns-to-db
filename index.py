@@ -73,8 +73,6 @@ def handler(event, context):
         # use the database
         CONNECTION.select_db(DATA['db_name'])
         # check if table exists
-        cursor.execute('DROP TABLE %s' % table_name)
-        CONNECTION.commit()
         cursor.execute('show tables')
         tables = cursor.fetchall()
         logging.info(tables)
@@ -84,10 +82,11 @@ def handler(event, context):
             cursor.execute(sql)
             CONNECTION.commit()
         # insert new record
-        cursor.execute('INSERT INTO %s (%s) VALUES (%s)' %
-                       (table_name, cols, vals))
+        result = cursor.execute('INSERT INTO %s (%s) VALUES (%s)' %
+                                (table_name, cols, vals))
         CONNECTION.commit()
-        logging.info({'inserted': {'values': vals}})
+        logging.info({'result': str(result),
+                      'inserted': {'values': vals}})
 
     return {'statusCode': 200,
             'body': json.dumps({'status': 'OK'}),
