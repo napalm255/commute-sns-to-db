@@ -8,6 +8,7 @@ import os
 import json
 from collections import OrderedDict
 import pymysql
+from pymysql.cursors import DictCursor
 
 
 try:
@@ -17,7 +18,8 @@ try:
             'db_name': os.environ['DATABASE_NAME']}
     CONNECTION = pymysql.connect(host=DATA['db_host'],
                                  user=DATA['db_user'],
-                                 password=DATA['db_pass'])
+                                 password=DATA['db_pass'],
+                                 cursorclass=DictCursor)
     logging.info('Successfully connected to MySql.')
 # pylint: disable=broad-except
 except Exception as ex:
@@ -36,6 +38,7 @@ def handler(event, context):
     edata = json.loads(event['Records'][0]['Sns']['Message'])
 
     table_name = 'traffic'
+    logging.info('setup table data')
     table_data = OrderedDict([
         ('id', {'type': 'INT NOT NULL AUTO_INCREMENT',
                 'value': ''}),
@@ -54,6 +57,7 @@ def handler(event, context):
         ('duration_in_traffic', {'type': 'INT',
                                  'value': int(edata['duration_in_traffic']['value'])})
     ])
+    logging.info('gathered table data')
     table_scheme = [x + " " + y['type'] for x, y in table_data.iteritems()]
     columns = table_data.keys()[1:]
     values = [str(y['value']) for x, y in table_data.iteritems() if
@@ -62,13 +66,14 @@ def handler(event, context):
     cols = ', '.join(columns)
     vals = ', '.join(values)
 
+    logging.info('start database work')
     with CONNECTION.cursor() as cursor:
         # check if database exists
         cursor.execute('show databases')
         databases = cursor.fetchall()
         logging.info(databases)
         # create database if it does not exist
-        if (DATA['db_name'],) not in databases:
+        if DATA['db_name'] not in databases:
             logging.info('creating database')
             sql = 'CREATE DATABASE %s' % (DATA['db_name'])
             logging.info(sql)
@@ -82,7 +87,7 @@ def handler(event, context):
         tables = cursor.fetchall()
         logging.info(tables)
         # create table if it does not exist
-        if (table_name,) not in tables:
+        if table_name not in tables:
             logging.info('creating table')
             sql = 'CREATE TABLE %s (%s, PRIMARY KEY (id))' % (table_name, tbl)
             cursor.execute(sql)
@@ -95,6 +100,7 @@ def handler(event, context):
         cursor.execute(sql)
         CONNECTION.commit()
         logging.info('inserted record')
+    logging.info('end database work')
 
     return {'statusCode': 200,
             'body': json.dumps({'status': 'OK'}),
