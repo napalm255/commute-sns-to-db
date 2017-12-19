@@ -39,7 +39,7 @@ def handler(event, context):
         ('id', {'type': 'INT NOT NULL AUTO_INCREMENT',
                 'value': ''}),
         ('timestamp', {'type': 'TIMESTAMP NOT NULL',
-                       'value': edata['timestamp']}),
+                       'value': '"' + edata['timestamp'] + '"'}),
         ('origin', {'type': 'VARCHAR(255) NOT NULL',
                     'value': '"' + edata['origin'] + '"'}),
         ('destination', {'type': 'VARCHAR(255) NOT NULL',
