@@ -73,12 +73,9 @@ def handler(event, context):
         # use the database
         CONNECTION.select_db(DATA['db_name'])
         # check if table exists
-        cursor.execute('DROP TABLE IF EXISTS %s' % table_name)
-        CONNECTION.commit()
         cursor.execute('show tables')
         tables = cursor.fetchall()
         logging.info(tables)
-        sys.exit()
         # create table if it does not exist
         if (table_name,) not in tables:
             sql = 'CREATE TABLE %s (%s, PRIMARY KEY (id))' % (table_name, tbl)
