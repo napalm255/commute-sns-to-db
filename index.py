@@ -85,6 +85,7 @@ def handler(event, context):
         cursor.execute('INSERT INTO %s (%s) VALUES (%s)' %
                        (table_name, cols, vals))
         CONNECTION.commit()
+        logging.info({'inserted': {'values': vals}})
 
     return {'statusCode': 200,
             'body': json.dumps({'status': 'OK'}),
