@@ -36,7 +36,7 @@ Resources:
       Handler: index.handler
       Runtime: python2.7
       CodeUri: ./
-      Timeout: 30
+      Timeout: 120
       VpcConfig:
         SecurityGroupIds:
           - sg-2d222258
