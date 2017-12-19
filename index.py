@@ -19,8 +19,9 @@ try:
                                  user=DATA['db_user'],
                                  password=DATA['db_pass'])
     logging.info('Successfully connected to MySql.')
-except:
-    logging.error('Unexpected error: could not connect to MySql.')
+# pylint: disable=broad-except
+except Exception as ex:
+    logging.error('Unexpected error: could not connect to MySql. (%s)', ex)
     sys.exit()
 
 
@@ -84,6 +85,7 @@ def handler(event, context):
         # insert new record
         result = cursor.execute('INSERT INTO %s (%s) VALUES (%s)' %
                                 (table_name, cols, vals))
+        logging.info('pre-commit on insert')
         CONNECTION.commit()
         logging.info({'result': str(result),
                       'inserted': {'values': vals}})
