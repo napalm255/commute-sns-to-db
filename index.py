@@ -57,6 +57,7 @@ def handler(event, context):
         ('duration_in_traffic', {'type': 'INT',
                                  'value': int(edata['duration_in_traffic']['value'])})
     ])
+    logging.info(table_data)
     logging.info('gathered table data')
     table_scheme = [x + " " + y['type'] for x, y in table_data.iteritems()]
     columns = table_data.keys()[1:]
