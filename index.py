@@ -69,8 +69,12 @@ def handler(event, context):
         logging.info(databases)
         # create database if it does not exist
         if (DATA['db_name'],) not in databases:
-            cursor.execute('CREATE DATABASE %s' % DATA['db_name'])
+            logging.info('creating database')
+            sql = 'CREATE DATABASE %s' % (DATA['db_name'])
+            logging.info(sql)
+            cursor.execute(sql)
             CONNECTION.commit()
+            logging.info('created database')
         # use the database
         CONNECTION.select_db(DATA['db_name'])
         # check if table exists
@@ -79,16 +83,18 @@ def handler(event, context):
         logging.info(tables)
         # create table if it does not exist
         if (table_name,) not in tables:
+            logging.info('creating table')
             sql = 'CREATE TABLE %s (%s, PRIMARY KEY (id))' % (table_name, tbl)
             cursor.execute(sql)
             CONNECTION.commit()
+            logging.info('table created')
         # insert new record
-        result = cursor.execute('INSERT INTO %s (%s) VALUES (%s)' %
-                                (table_name, cols, vals))
-        logging.info('pre-commit on insert')
+        logging.info('inserting record')
+        sql = 'INSERT INTO %s (%s) VALUES (%s)' % (table_name, cols, vals)
+        logging.info(sql)
+        cursor.execute(sql)
         CONNECTION.commit()
-        logging.info({'result': str(result),
-                      'inserted': {'values': vals}})
+        logging.info('inserted record')
 
     return {'statusCode': 200,
             'body': json.dumps({'status': 'OK'}),
