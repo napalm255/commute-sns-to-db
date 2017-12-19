@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """Commute SNS to Database."""
+
+from __future__ import print_function
 import sys
 import logging
 import os
@@ -91,4 +93,4 @@ def handler(event, context):
 
 if __name__ == '__main__':
     with open('test.json') as json_file:
-        handler(json.load(json_file), None)
+        print(handler(json.load(json_file), None))
