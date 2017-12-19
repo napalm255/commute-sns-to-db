@@ -73,7 +73,7 @@ def handler(event, context):
         databases = cursor.fetchall()
         logging.info(databases)
         # create database if it does not exist
-        if DATA['db_name'] not in databases:
+        if {'Database': DATA['db_name']} not in databases:
             logging.info('creating database')
             sql = 'CREATE DATABASE %s' % (DATA['db_name'])
             logging.info(sql)
@@ -87,7 +87,7 @@ def handler(event, context):
         tables = cursor.fetchall()
         logging.info(tables)
         # create table if it does not exist
-        if table_name not in tables:
+        if {'Table': table_name} not in tables:
             logging.info('creating table')
             sql = 'CREATE TABLE %s (%s, PRIMARY KEY (id))' % (table_name, tbl)
             cursor.execute(sql)
