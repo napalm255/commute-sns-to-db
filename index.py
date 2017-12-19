@@ -73,6 +73,8 @@ def handler(event, context):
         # use the database
         CONNECTION.select_db(DATA['db_name'])
         # check if table exists
+        cursor.execute('DROP TABLE %s' % table_name)
+        CONNECTION.commit()
         cursor.execute('show tables')
         tables = cursor.fetchall()
         logging.info(tables)
