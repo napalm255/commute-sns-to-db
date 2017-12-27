@@ -9,25 +9,6 @@ Parameters:
     Type: String
     Description: CodeStar projectId used to associate new resources to team members
 
-  # Database Connection Parameters from SSM
-  DatabaseHost:
-    Type: 'AWS::SSM::Parameter::Value<String>'
-    Description: Database host
-    Default: commute_database_host
-  DatabaseUser:
-    Type: 'AWS::SSM::Parameter::Value<String>'
-    Description: Database user
-    Default: commute_database_user
-  DatabasePass:
-    Type: 'AWS::SSM::Parameter::Value<String>'
-    Description: Database pass
-    NoEcho: true
-    Default: commute_database_pass
-  DatabaseName:
-    Type: 'AWS::SSM::Parameter::Value<String>'
-    Description: Database name
-    Default: commute_database_name
-
 Resources:
   SnsToDb:
     Type: AWS::Serverless::Function
@@ -36,7 +17,7 @@ Resources:
       Handler: index.handler
       Runtime: python2.7
       CodeUri: ./
-      Timeout: 120
+      Timeout: 30
       VpcConfig:
         SecurityGroupIds:
           - sg-2d222258
@@ -46,14 +27,9 @@ Resources:
           - subnet-3980ae04
           - subnet-9c5315b6
       Policies:
-        - AmazonSNSFullAccess
         - AWSLambdaVPCAccessExecutionRole
-      Environment:
-        Variables:
-          DATABASE_HOST: !Ref DatabaseHost
-          DATABASE_USER: !Ref DatabaseUser
-          DATABASE_PASS: !Ref DatabasePass
-          DATABASE_NAME: !Ref DatabaseName
+        - AmazonSNSFullAccess
+        - AmazonSSMReadOnlyAccess
       Events:
         CommuteTopic:
           Type: SNS
