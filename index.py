@@ -1,44 +1,63 @@
 #!/usr/bin/env python
 """Commute SNS to Database."""
+# pylint: disable=broad-except
 
 from __future__ import print_function
 import sys
 import logging
-import os
 import json
 from collections import OrderedDict
 import pymysql
 from pymysql.cursors import DictCursor
+import boto3
+
+
+# logging configuration
+logging.getLogger().setLevel(logging.INFO)
+
+try:
+    SSM = boto3.client('ssm')
+
+    PREFIX = '/commute/database'
+    PARAMS = SSM.get_parameters_by_path(Path=PREFIX, Recursive=True,
+                                        WithDecryption=True)
+    logging.debug('ssm: parameters(%s)', PARAMS)
+
+    DATABASE = dict()
+    for param in PARAMS['Parameters']:
+        key = param['Name'].replace('%s/' % PREFIX, '')
+        DATABASE.update({key: param['Value']})
+    logging.debug('ssm: database(%s)', DATABASE)
+
+    logging.info('ssm: successfully gathered parameters')
+except Exception as ex:
+    logging.error('ssm: could not connect to SSM. (%s)', ex)
+    sys.exit()
 
 
 try:
-    DATA = {'db_host': os.environ['DATABASE_HOST'],
-            'db_user': os.environ['DATABASE_USER'],
-            'db_pass': os.environ['DATABASE_PASS'],
-            'db_name': os.environ['DATABASE_NAME']}
-    CONNECTION = pymysql.connect(host=DATA['db_host'],
-                                 user=DATA['db_user'],
-                                 password=DATA['db_pass'],
+    CONNECTION = pymysql.connect(host=DATABASE['host'],
+                                 user=DATABASE['user'],
+                                 password=DATABASE['pass'],
+                                 autocommit=True,
                                  cursorclass=DictCursor)
-    logging.info('Successfully connected to MySql.')
+    logging.info('database: successfully connected to mysql')
 # pylint: disable=broad-except
 except Exception as ex:
-    logging.error('Unexpected error: could not connect to MySql. (%s)', ex)
+    logging.error('database: could not connect to mysql (%s)', ex)
     sys.exit()
 
 
 def handler(event, context):
     """Lambda handler."""
     # pylint: disable=unused-argument, too-many-locals
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    logger.info(event)
+    logging.info(event)
 
     header = {'Content-Type': 'application/json'}
     edata = json.loads(event['Records'][0]['Sns']['Message'])
 
     table_name = 'traffic'
-    logging.info('setup table data')
+    logging.info('table data: setup')
     table_data = OrderedDict([
         ('id', {'type': 'INT NOT NULL AUTO_INCREMENT',
                 'value': ''}),
@@ -57,8 +76,8 @@ def handler(event, context):
         ('duration_in_traffic', {'type': 'INT',
                                  'value': int(edata['duration_in_traffic']['value'])})
     ])
-    logging.info(table_data)
-    logging.info('gathered table data')
+    logging.debug('table data: %s', table_data)
+    logging.info('table data: finished')
     table_scheme = [x + " " + y['type'] for x, y in table_data.iteritems()]
     columns = table_data.keys()[1:]
     values = [str(y['value']) for x, y in table_data.iteritems() if
@@ -67,41 +86,37 @@ def handler(event, context):
     cols = ', '.join(columns)
     vals = ', '.join(values)
 
-    logging.info('start database work')
+    logging.info('database: start')
     with CONNECTION.cursor() as cursor:
         # check if database exists
         cursor.execute('show databases')
         databases = cursor.fetchall()
-        logging.info(databases)
+        logging.debug('databases: %s', databases)
         # create database if it does not exist
-        if {'Database': DATA['db_name']} not in databases:
-            logging.info('creating database')
-            sql = 'CREATE DATABASE %s' % (DATA['db_name'])
-            logging.info(sql)
+        if {'Database': DATABASE['name']} not in databases:
+            sql = 'CREATE DATABASE %s' % (DATABASE['name'])
+            logging.info('database: creating (%s)', sql)
             cursor.execute(sql)
-            CONNECTION.commit()
-            logging.info('created database')
+            logging.info('database: created')
         # use the database
-        CONNECTION.select_db(DATA['db_name'])
+        CONNECTION.select_db(DATABASE['name'])
         # check if table exists
         cursor.execute('show tables')
         tables = cursor.fetchall()
-        logging.info(tables)
+        logging.debug('tables: %s', tables)
         # create table if it does not exist
         if {'Tables_in_commute': table_name} not in tables:
-            logging.info('creating table')
             sql = 'CREATE TABLE %s (%s, PRIMARY KEY (id))' % (table_name, tbl)
+            logging.info('table: creating (%s)', sql)
             cursor.execute(sql)
-            CONNECTION.commit()
-            logging.info('table created')
+            logging.info('table: created')
         # insert new record
-        logging.info('inserting record')
+        logging.info('record: inserting')
         sql = 'INSERT INTO %s (%s) VALUES (%s)' % (table_name, cols, vals)
-        logging.info(sql)
+        logging.debug('record: %s', sql)
         cursor.execute(sql)
-        CONNECTION.commit()
-        logging.info('inserted record')
-    logging.info('end database work')
+        logging.info('record: inserted')
+    logging.info('database: end')
 
     return {'statusCode': 200,
             'body': json.dumps({'status': 'OK'}),
