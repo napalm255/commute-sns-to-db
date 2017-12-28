@@ -78,9 +78,9 @@ def handler(event, context):
     ])
     logging.debug('table data: %s', table_data)
     logging.info('table data: finished')
-    table_scheme = [x + " " + y['type'] for x, y in table_data.iteritems()]
+    table_scheme = [x + " " + y['type'] for x, y in table_data.items()]
     columns = table_data.keys()[1:]
-    values = [str(y['value']) for x, y in table_data.iteritems() if
+    values = [str(y['value']) for x, y in table_data.items() if
               'id' not in x]
     tbl = ', '.join(table_scheme)
     cols = ', '.join(columns)
