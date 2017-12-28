@@ -15,7 +15,7 @@ Resources:
     Properties:
       Description: Commute SNS to Database
       Handler: index.handler
-      Runtime: python2.7
+      Runtime: python3.6
       CodeUri: ./
       Timeout: 30
       VpcConfig:
