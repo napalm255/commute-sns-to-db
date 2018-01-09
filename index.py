@@ -143,7 +143,9 @@ def handler(event, context):
 
     # publish cloudwatch metric
     try:
+        logging.info('cloudwatch: publish metric start')
         publish_metric(edata['duration_in_traffic']['value'], edata['timestamp'])
+        logging.info('cloudwatch: publish metric end')
     except Exception:
         pass
 
