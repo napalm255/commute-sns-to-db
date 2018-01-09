@@ -30,7 +30,6 @@ Resources:
         - AWSLambdaVPCAccessExecutionRole
         - AmazonSNSFullAccess
         - AmazonSSMReadOnlyAccess
-        - CloudWatchFullAccess
       Events:
         CommuteTopic:
           Type: SNS
