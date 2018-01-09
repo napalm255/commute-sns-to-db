@@ -47,6 +47,29 @@ except Exception as ex:
     logging.error('database: could not connect to mysql (%s)', ex)
     sys.exit()
 
+try:
+    CLOUDWATCH = boto3.client('cloudwatch')
+# pylint: disable=broad-except
+except Exception as ex:
+    logging.error('cloudwatch: could not connect to cloudwatch (%s)', ex)
+    sys.exit()
+
+
+def publish_metric(value, timestamp):
+    """Publish CloudWatch Metric."""
+    response = CLOUDWATCH.put_metric_data(
+        Namespace='commute',
+        MetricData=[
+            {
+                'MetricName': 'duration_in_traffic',
+                'Timestamp': timestamp,
+                'Value': value,
+                'Unit': 'Seconds'
+            }
+        ]
+    )
+    return response
+
 
 def handler(event, context):
     """Lambda handler."""
@@ -117,6 +140,12 @@ def handler(event, context):
         cursor.execute(sql)
         logging.info('record: inserted')
     logging.info('database: end')
+
+    # publish cloudwatch metric
+    try:
+        publish_metric(edata['duration_in_traffic']['value'], edata['timestamp'])
+    except Exception:
+        pass
 
     return {'statusCode': 200,
             'body': json.dumps({'status': 'OK'}),
